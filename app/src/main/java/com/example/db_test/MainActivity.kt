@@ -15,12 +15,19 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.db_test.databinding.ActivityMainBinding
 import com.example.db_test.db.MyAdapter
 import com.example.db_test.db.MyDbManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
     lateinit var bindingClass: ActivityMainBinding
     val myDbManager = MyDbManager(this)
     val myAdapter= MyAdapter(ArrayList(),this)
+    private var job: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,7 +46,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         myDbManager.openDb()
-        fillAdapter()
+        fillAdapter("")
     }
 
     override fun onDestroy() {
@@ -61,6 +68,7 @@ class MainActivity : AppCompatActivity() {
         rcView.adapter = myAdapter
     }
 
+    //функция поиска
     private fun initSearchView(){
         var searchView = bindingClass.searchView
 
@@ -70,24 +78,31 @@ class MainActivity : AppCompatActivity() {
                 return true
             }
 
+            // поиск по буквам/тексту
             override fun onQueryTextChange(newText: String?): Boolean {
-                /* обновляем адаптер */
-                val list = myDbManager.readDbData(newText!!)
-                myAdapter.updateAdapter(list)
+                fillAdapter(newText!!)
                 //Log.d("MyLog","New text : $newText")
                 return true
             }
         } )
     }
 
-    fun fillAdapter(){
-        val tvNoElement = bindingClass.tvNoElement
-        val list = myDbManager.readDbData("")
-        myAdapter.updateAdapter(list)
-        if(list.size > 0){
-            tvNoElement.visibility = View.GONE
-        } else {
-            tvNoElement.visibility = View.VISIBLE
+    private fun fillAdapter(text: String){
+
+        job?.cancel()
+
+        // запускаем функцию Coroutine для оптимизации потоков - урок 10 Блокнот
+        job = CoroutineScope(Dispatchers.Main).launch {
+
+            val tvNoElement = bindingClass.tvNoElement
+            val list = myDbManager.readDbData(text)
+            myAdapter.updateAdapter(list)
+            if(list.size > 0){
+                tvNoElement.visibility = View.GONE
+            } else {
+                tvNoElement.visibility = View.VISIBLE
+            }
+
         }
     }
 

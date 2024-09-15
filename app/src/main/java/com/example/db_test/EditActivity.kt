@@ -14,6 +14,9 @@ import androidx.core.view.WindowInsetsCompat
 import com.example.db_test.databinding.EditActivityBinding
 import com.example.db_test.db.MyDbManager
 import com.example.db_test.db.MyIntentConstant
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -91,13 +94,16 @@ class EditActivity : AppCompatActivity() {
         val myTitle = eTitle.text.toString()
         val myDesc = eDesc.text.toString()
 
-        if(myTitle != "" && myDesc != ""){
-            if(editState) {
-                myDbManager.updateItem(myTitle, myDesc, tempImageURI, getCurrentTime(), id)
-            } else {
-                myDbManager.insertToDb(myTitle, myDesc, tempImageURI, getCurrentTime())
+        // запускаем функцию Coroutine для оптимизации потоков - урок 10 Блокнот
+        CoroutineScope(Dispatchers.Main).launch {
+            if(myTitle != "" && myDesc != ""){
+                if(editState) {
+                    myDbManager.updateItem(myTitle, myDesc, tempImageURI, getCurrentTime(), id)
+                } else {
+                    myDbManager.insertToDb(myTitle, myDesc, tempImageURI, getCurrentTime())
+                }
+                finish()
             }
-            finish()
         }
 
     }

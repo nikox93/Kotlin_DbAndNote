@@ -4,6 +4,8 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.provider.BaseColumns
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class MyDbManager(val context: Context) {
     val myDbHelper = MyDbHelper(context)
@@ -14,7 +16,8 @@ class MyDbManager(val context: Context) {
     }
 
     // функция добавления данных в БД
-    fun insertToDb(title: String, content: String, uri: String, time: String){
+    //suspend - необходим для блокировки Coroutine - урок 10 Блокнот
+    suspend fun insertToDb(title: String, content: String, uri: String, time: String) = withContext(Dispatchers.IO){
         val values = ContentValues().apply {
             put(MyDBNameClass.COLUMN_NAME_TITLE, title)
             put(MyDBNameClass.COLUMN_NAME_CONTENT, content)
@@ -24,14 +27,9 @@ class MyDbManager(val context: Context) {
         db?.insert(MyDBNameClass.TABLE_NAME, null, values)
     }
 
-    // функция удаления данных в БД
-    fun delFromDb(id: String){
-        val selection = BaseColumns._ID + "=$id"
-        db?.delete(MyDBNameClass.TABLE_NAME, selection, null)
-    }
-
     // функция обновления/редактирования данных в БД
-    fun updateItem(title: String, content: String, uri: String, time: String, id:Int){
+    //suspend - необходим для блокировки Coroutine - урок 10 Блокнот
+    suspend fun updateItem(title: String, content: String, uri: String, time: String, id:Int) = withContext(Dispatchers.IO){
         val selection = BaseColumns._ID + "=$id"
         val values = ContentValues().apply {
             put(MyDBNameClass.COLUMN_NAME_TITLE, title)
@@ -42,11 +40,9 @@ class MyDbManager(val context: Context) {
         db?.update(MyDBNameClass.TABLE_NAME,  values, selection,null)
     }
 
-    /*
-    Функция считывания с БД.
-    Возвращаем массив ArrayList с кол-вом элементов ListItem
-    */
-    fun readDbData(searchText:String) : ArrayList<ListItem>{
+    // Функция считывания с БД.Возвращаем массив ArrayList с кол-вом элементов ListItem
+    //suspend - необходим для блокировки Coroutine - урок 10 Блокнот
+    suspend fun readDbData(searchText:String) : ArrayList<ListItem> = withContext(Dispatchers.IO){
         // создаем массив
         val dataList = ArrayList<ListItem>()
         // создаем переменную для поиска
@@ -77,7 +73,13 @@ class MyDbManager(val context: Context) {
             }
 
         cursor.close()
-        return dataList
+        return@withContext dataList
+    }
+
+    // функция удаления данных из БД
+    fun delFromDb(id: String){
+        val selection = BaseColumns._ID + "=$id"
+        db?.delete(MyDBNameClass.TABLE_NAME, selection, null)
     }
 
     fun closeDb(){
